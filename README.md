@@ -40,7 +40,7 @@ flowchart TD
 
     Browser -->|HTTP| Dashboard
     Dashboard -->|HTTP / JSON REST| API
-    API <-->|Cache-Aside (TTL 60s)| Cache
+   API -->|Cache-Aside (TTL 60s)| Cache
     API -->|Fallback Read/Write| LocalCatalog
 
     API -->|gRPC: Propose Metadata Update| M1
