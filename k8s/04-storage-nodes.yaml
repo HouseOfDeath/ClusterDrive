@@ -1,0 +1,249 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-node-01
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: storage-node-01
+    app.kubernetes.io/component: storage-node
+    app.kubernetes.io/part-of: clusterdrive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storage-node-01
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: storage-node-01
+        app.kubernetes.io/component: storage-node
+        app.kubernetes.io/part-of: clusterdrive
+    spec:
+      containers:
+        - name: storage-node
+          image: clusterdive-backend:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - backend.storage.node
+            - --node-id
+            - node-01
+            - --port
+            - "50051"
+            - --storage-dir
+            - /app/data/storage/node-01
+          ports:
+            - containerPort: 50051
+              name: grpc
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          volumeMounts:
+            - name: storage-data
+              mountPath: /app/data/storage/node-01
+          livenessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+      volumes:
+        - name: storage-data
+          persistentVolumeClaim:
+            claimName: storage-node-01-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-node-01
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: storage-node-01
+    app.kubernetes.io/component: storage-node
+    app.kubernetes.io/part-of: clusterdrive
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: storage-node-01
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-node-02
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: storage-node-02
+    app.kubernetes.io/component: storage-node
+    app.kubernetes.io/part-of: clusterdrive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storage-node-02
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: storage-node-02
+        app.kubernetes.io/component: storage-node
+        app.kubernetes.io/part-of: clusterdrive
+    spec:
+      containers:
+        - name: storage-node
+          image: clusterdive-backend:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - backend.storage.node
+            - --node-id
+            - node-02
+            - --port
+            - "50051"
+            - --storage-dir
+            - /app/data/storage/node-02
+          ports:
+            - containerPort: 50051
+              name: grpc
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          volumeMounts:
+            - name: storage-data
+              mountPath: /app/data/storage/node-02
+          livenessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+      volumes:
+        - name: storage-data
+          persistentVolumeClaim:
+            claimName: storage-node-02-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-node-02
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: storage-node-02
+    app.kubernetes.io/component: storage-node
+    app.kubernetes.io/part-of: clusterdrive
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: storage-node-02
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-node-03
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: storage-node-03
+    app.kubernetes.io/component: storage-node
+    app.kubernetes.io/part-of: clusterdrive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storage-node-03
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: storage-node-03
+        app.kubernetes.io/component: storage-node
+        app.kubernetes.io/part-of: clusterdrive
+    spec:
+      containers:
+        - name: storage-node
+          image: clusterdive-backend:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - backend.storage.node
+            - --node-id
+            - node-03
+            - --port
+            - "50051"
+            - --storage-dir
+            - /app/data/storage/node-03
+          ports:
+            - containerPort: 50051
+              name: grpc
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          volumeMounts:
+            - name: storage-data
+              mountPath: /app/data/storage/node-03
+          livenessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+      volumes:
+        - name: storage-data
+          persistentVolumeClaim:
+            claimName: storage-node-03-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-node-03
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: storage-node-03
+    app.kubernetes.io/component: storage-node
+    app.kubernetes.io/part-of: clusterdrive
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: storage-node-03
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+

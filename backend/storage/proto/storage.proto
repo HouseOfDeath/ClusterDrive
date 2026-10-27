@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package clusterdive.storage.v1;
+
+service StorageService {
+  rpc UploadChunk(UploadChunkRequest) returns (UploadChunkResponse);
+  rpc DownloadChunk(DownloadChunkRequest) returns (DownloadChunkResponse);
+  rpc DeleteChunk(DeleteChunkRequest) returns (DeleteChunkResponse);
+  rpc CheckHealth(HealthRequest) returns (HealthResponse);
+}
+
+message UploadChunkRequest {
+  string chunk_id = 1;
+  bytes data = 2;
+  string sha256 = 3;
+}
+
+message UploadChunkResponse {
+  string chunk_id = 1;
+  string sha256 = 2;
+  int64 size_bytes = 3;
+}
+
+message DownloadChunkRequest {
+  string chunk_id = 1;
+}
+
+message DownloadChunkResponse {
+  string chunk_id = 1;
+  bytes data = 2;
+  string sha256 = 3;
+}
+
+message DeleteChunkRequest {
+  string chunk_id = 1;
+}
+
+message DeleteChunkResponse {
+  string chunk_id = 1;
+  bool deleted = 2;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string node_id = 1;
+  string status = 2;
+  int64 storage_used_bytes = 3;
+  int64 storage_capacity_bytes = 4;
+  int64 stored_chunks = 5;
+}

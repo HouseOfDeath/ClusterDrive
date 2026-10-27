@@ -1,0 +1,11 @@
+fastapi>=0.115,<1
+grpcio==1.85.0
+grpcio-tools==1.85.0
+httpx>=0.28,<1
+python-multipart>=0.0.20,<1
+pydantic>=2.10,<3
+protobuf>=7.35.1,<8
+pytest>=8,<10
+python-dotenv>=1,<2
+redis>=5,<7
+uvicorn[standard]>=0.34,<1

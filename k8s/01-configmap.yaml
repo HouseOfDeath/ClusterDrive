@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clusterdrive-config
+  namespace: clusterdrive
+  labels:
+    app.kubernetes.io/name: clusterdrive
+    app.kubernetes.io/part-of: clusterdrive
+data:
+  CLUSTERDRIVE_LOG_LEVEL: "INFO"
+  CLUSTERDRIVE_REPLICATION_FACTOR: "2"
+  CLUSTERDRIVE_CHUNK_SIZE_BYTES: "1048576"
+  CLUSTERDRIVE_STORAGE_NODES: "node-01=storage-node-01:50051,node-02=storage-node-02:50051,node-03=storage-node-03:50051"
+  CLUSTERDRIVE_STORAGE_RPC_TIMEOUT_SECONDS: "5.0"
+  CLUSTERDRIVE_METADATA_NODES: "metadata-01=metadata-0.metadata-hs:50161,metadata-02=metadata-1.metadata-hs:50161,metadata-03=metadata-2.metadata-hs:50161"
+  CLUSTERDRIVE_METADATA_STATE_DIR: "/app/data/metadata-nodes"
+  CLUSTERDRIVE_METADATA_BIND_HOST: "0.0.0.0"
+  CLUSTERDRIVE_METADATA_PATH: "/app/data/metadata.json"
+  CLUSTERDRIVE_METADATA_RPC_TIMEOUT_SECONDS: "5.0"
+  CLUSTERDRIVE_RAFT_HEARTBEAT_INTERVAL_SECONDS: "0.5"
+  CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MIN_SECONDS: "5.0"
+  CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MAX_SECONDS: "8.0"
+  CLUSTERDRIVE_RAFT_RPC_TIMEOUT_SECONDS: "2.0"
+  CLUSTERDRIVE_REDIS_URL: "redis://redis:6379/0"
+  CLUSTERDRIVE_METADATA_CACHE_TTL_SECONDS: "60"
+  CLUSTERDRIVE_CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:30080,http://127.0.0.1:30080,http://localhost:30081,http://127.0.0.1:30081,http://localhost"
+

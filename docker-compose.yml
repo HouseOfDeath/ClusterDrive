@@ -1,0 +1,221 @@
+name: clusterdive
+
+x-backend-image: &backend-image
+  image: clusterdive-backend:local
+  init: true
+  restart: unless-stopped
+  networks:
+    - clusterdive
+
+x-metadata-environment: &metadata-environment
+  CLUSTERDRIVE_METADATA_NODES: ${CLUSTERDRIVE_METADATA_NODES:-metadata-01=metadata-01:50161,metadata-02=metadata-02:50161,metadata-03=metadata-03:50161}
+  CLUSTERDRIVE_METADATA_BIND_HOST: 0.0.0.0
+  CLUSTERDRIVE_METADATA_STATE_DIR: /app/data/metadata-nodes
+  CLUSTERDRIVE_RAFT_HEARTBEAT_INTERVAL_SECONDS: ${CLUSTERDRIVE_RAFT_HEARTBEAT_INTERVAL_SECONDS:-0.5}
+  CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MIN_SECONDS: ${CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MIN_SECONDS:-5.0}
+  CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MAX_SECONDS: ${CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MAX_SECONDS:-8.0}
+  CLUSTERDRIVE_RAFT_RPC_TIMEOUT_SECONDS: ${CLUSTERDRIVE_RAFT_RPC_TIMEOUT_SECONDS:-2.0}
+  CLUSTERDRIVE_LOG_LEVEL: ${CLUSTERDRIVE_LOG_LEVEL:-INFO}
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - clusterdive
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  storage-node-01:
+    <<: *backend-image
+    command: ["python", "-m", "backend.storage.node", "--node-id", "node-01", "--port", "50051", "--storage-dir", "/app/data/storage/node-01"]
+    volumes:
+      - storage-node-01-data:/app/data/storage/node-01
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1', 50051), timeout=3); s.close()"
+      interval: 10s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+
+  storage-node-02:
+    <<: *backend-image
+    command: ["python", "-m", "backend.storage.node", "--node-id", "node-02", "--port", "50051", "--storage-dir", "/app/data/storage/node-02"]
+    volumes:
+      - storage-node-02-data:/app/data/storage/node-02
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1', 50051), timeout=3); s.close()"
+      interval: 10s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+
+  storage-node-03:
+    <<: *backend-image
+    command: ["python", "-m", "backend.storage.node", "--node-id", "node-03", "--port", "50051", "--storage-dir", "/app/data/storage/node-03"]
+    volumes:
+      - storage-node-03-data:/app/data/storage/node-03
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1', 50051), timeout=3); s.close()"
+      interval: 10s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+
+  metadata-01:
+    <<: *backend-image
+    command: ["python", "-m", "backend.metadata.server", "--node-id", "metadata-01"]
+    environment:
+      <<: *metadata-environment
+    volumes:
+      - metadata-node-01-data:/app/data/metadata-nodes/metadata-01
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1', 50161), timeout=3); s.close()"
+      interval: 10s
+      timeout: 15s
+      retries: 10
+      start_period: 30s
+
+  metadata-02:
+    <<: *backend-image
+    command: ["python", "-m", "backend.metadata.server", "--node-id", "metadata-02"]
+    environment:
+      <<: *metadata-environment
+    volumes:
+      - metadata-node-02-data:/app/data/metadata-nodes/metadata-02
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1', 50161), timeout=3); s.close()"
+      interval: 10s
+      timeout: 15s
+      retries: 10
+      start_period: 30s
+
+  metadata-03:
+    <<: *backend-image
+    command: ["python", "-m", "backend.metadata.server", "--node-id", "metadata-03"]
+    environment:
+      <<: *metadata-environment
+    volumes:
+      - metadata-node-03-data:/app/data/metadata-nodes/metadata-03
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1', 50161), timeout=3); s.close()"
+      interval: 10s
+      timeout: 15s
+      retries: 10
+      start_period: 30s
+
+  api:
+    <<: *backend-image
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    command: ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      CLUSTERDRIVE_CORS_ORIGINS: ${CLUSTERDRIVE_CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174}
+      CLUSTERDRIVE_STORAGE_NODES: ${CLUSTERDRIVE_STORAGE_NODES:-node-01=storage-node-01:50051,node-02=storage-node-02:50051,node-03=storage-node-03:50051}
+      CLUSTERDRIVE_STORAGE_RPC_TIMEOUT_SECONDS: ${CLUSTERDRIVE_STORAGE_RPC_TIMEOUT_SECONDS:-5.0}
+      CLUSTERDRIVE_REPLICATION_FACTOR: ${CLUSTERDRIVE_REPLICATION_FACTOR:-2}
+      CLUSTERDRIVE_CHUNK_SIZE_BYTES: ${CLUSTERDRIVE_CHUNK_SIZE_BYTES:-1048576}
+      CLUSTERDRIVE_METADATA_PATH: /app/data/metadata.json
+      CLUSTERDRIVE_METADATA_NODES: ${CLUSTERDRIVE_METADATA_NODES:-metadata-01=metadata-01:50161,metadata-02=metadata-02:50161,metadata-03=metadata-03:50161}
+      CLUSTERDRIVE_METADATA_STATE_DIR: /app/data/metadata-nodes
+      CLUSTERDRIVE_RAFT_HEARTBEAT_INTERVAL_SECONDS: ${CLUSTERDRIVE_RAFT_HEARTBEAT_INTERVAL_SECONDS:-0.5}
+      CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MIN_SECONDS: ${CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MIN_SECONDS:-5.0}
+      CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MAX_SECONDS: ${CLUSTERDRIVE_RAFT_ELECTION_TIMEOUT_MAX_SECONDS:-8.0}
+      CLUSTERDRIVE_RAFT_RPC_TIMEOUT_SECONDS: ${CLUSTERDRIVE_RAFT_RPC_TIMEOUT_SECONDS:-2.0}
+      CLUSTERDRIVE_METADATA_RPC_TIMEOUT_SECONDS: ${CLUSTERDRIVE_METADATA_RPC_TIMEOUT_SECONDS:-5.0}
+      CLUSTERDRIVE_REDIS_URL: redis://redis:6379/0
+      CLUSTERDRIVE_METADATA_CACHE_TTL_SECONDS: ${CLUSTERDRIVE_METADATA_CACHE_TTL_SECONDS:-60}
+      CLUSTERDRIVE_LOG_LEVEL: ${CLUSTERDRIVE_LOG_LEVEL:-INFO}
+    volumes:
+      - api-catalog-data:/app/data
+    ports:
+      - "${CLUSTERDRIVE_API_PORT:-8001}:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      storage-node-01:
+        condition: service_healthy
+      storage-node-02:
+        condition: service_healthy
+      storage-node-03:
+        condition: service_healthy
+      metadata-01:
+        condition: service_healthy
+      metadata-02:
+        condition: service_healthy
+      metadata-03:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: /
+    image: clusterdive-frontend:local
+    restart: unless-stopped
+    networks:
+      - clusterdive
+    ports:
+      - "${CLUSTERDRIVE_FRONTEND_PORT:-5174}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+networks:
+  clusterdive:
+    driver: bridge
+
+volumes:
+  api-catalog-data:
+  redis-data:
+  storage-node-01-data:
+  storage-node-02-data:
+  storage-node-03-data:
+  metadata-node-01-data:
+  metadata-node-02-data:
+  metadata-node-03-data:
