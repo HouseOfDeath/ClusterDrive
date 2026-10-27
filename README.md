@@ -40,20 +40,20 @@ flowchart TD
 
     Browser -->|HTTP| Dashboard
     Dashboard -->|HTTP / JSON REST| API
-   API -- "Cache-Aside (TTL 60s)" --> Cache
+    API -- "Cache-Aside (TTL 60s)" --> Cache
     API -->|Fallback Read/Write| LocalCatalog
 
     API -->|gRPC: Propose Metadata Update| M1
-    M1 <-->|gRPC: RequestVote & AppendEntries| M2
-    M1 <-->|gRPC: RequestVote & AppendEntries| M3
+    M1 -- "gRPC: RequestVote & AppendEntries" --> M2
+    M1 -- "gRPC: RequestVote & AppendEntries" --> M3
 
     API -->|gRPC: StoreChunk / RetrieveChunk| S1
     API -->|gRPC: StoreChunk / RetrieveChunk| S2
     API -->|gRPC: StoreChunk / RetrieveChunk| S3
 
-    S1 <-->|gRPC: ReplicateChunk (Anti-Entropy)| S2
-    S2 <-->|gRPC: ReplicateChunk (Anti-Entropy)| S3
-    S1 <-->|gRPC: ReplicateChunk (Anti-Entropy)| S3
+    S1 -- "gRPC: ReplicateChunk (Anti-Entropy)" --> S2
+    S2 -- "gRPC: ReplicateChunk (Anti-Entropy)" --> S3
+    S1 -- "gRPC: ReplicateChunk (Anti-Entropy)" --> S3
 ```
 
 ---
